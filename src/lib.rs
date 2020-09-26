@@ -21,15 +21,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 }
 
 pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-  let mut query_results = Vec::new();
 
-  for line in contents.lines() {
-    if line.contains(query) {
-      query_results.push(line);
-    }
-  }
-
-  query_results
+  contents.lines()
+    .filter(|line| line.contains(query))
+    .collect()
 }
 
 pub fn search_case_insensitvie<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
@@ -52,14 +47,24 @@ pub struct Config {
 }
 
 impl Config {
-  pub fn new(args: &[String]) -> Result<Config, &str> {
+  pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
+
+      args.next();
+
+      let query = match args.next() {
+        Some(arg) => arg,
+        None => return Err("输入查询内容")
+      };
+
+      let filename = match args.next() {
+        Some(arg) => arg,
+        None => return Err("输入查询的文件")
+      };
+
       if args.len() < 3 {
           return Err("参数错误");
       }
 
-      let query = args[1].clone();
-      let filename = args[2].clone();
-      
       let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
 
       Ok(Config { query, filename, case_sensitive })
